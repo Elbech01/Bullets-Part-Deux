@@ -22,10 +22,15 @@ public class Main : NetworkBehaviour
         netSettings.startClient += NetSettingsOnClientStart;
         netSettings.setStatusText("Not Connected");
 
-        //chat.SendMessage += ChatOnSendMessage;
+        if(chat != null)
+        {
+            chat.sendMessage += ChatOnSendMessage;
+        }
+        
 
         btnStart = GameObject.Find("btnStart").GetComponent<Button>();
         btnStart.onClick.AddListener(btnStartOnClick);
+        btnStart.gameObject.SetActive(false);
     }
 
     private void ChatOnSendMessage(It4080.Chat.ChatMessage msg)
@@ -43,6 +48,7 @@ public class Main : NetworkBehaviour
         NetworkManager.Singleton.StartClient();
         netSettings.hide();
         Debug.Log("Started client");
+        //netSettings.setStatusText($"Connected. We are client {NetworkManager.Singleton.}");
     }
 
     
@@ -57,6 +63,10 @@ public class Main : NetworkBehaviour
         NetworkManager.Singleton.StartHost();
         netSettings.hide();
         Debug.Log("Started host");
+        netSettings.setStatusText($"Server started. We are client {NetworkManager.Singleton.LocalClientId}");
+
+        btnStart.gameObject.SetActive(true);
+        
     }
 
     private void startServer(IPAddress ip, ushort port) {
@@ -71,6 +81,9 @@ public class Main : NetworkBehaviour
         netSettings.hide();
         Debug.Log("Started server");
         printIs("startServer");
+        netSettings.setStatusText($"Server started. We are client {NetworkManager.Singleton.LocalClientId}");
+
+        btnStart.gameObject.SetActive(true);
     }
 
 
