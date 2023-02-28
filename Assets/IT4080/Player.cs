@@ -11,6 +11,12 @@ public class Player : NetworkBehaviour
     private int hostColorIndex = 0;
     private Camera _camera;
     public NetworkVariable<Color> netPlayerColor = new NetworkVariable<Color>();
+    private float movementSpeed = 0.2f;
+    private float rotationSpeed = 1.0f;
+    public Vector3 movement = new (0, 0, 0);
+    public Vector3 rotate = new (0, 0, 0);
+
+
     public override void OnNetworkSpawn()
     {
         netPlayerColor.OnValueChanged += OnPlayerColorChanged;
@@ -24,7 +30,8 @@ public class Player : NetworkBehaviour
 
     public void ApplyPlayerColor()
     {
-       // GetComponent().material.color = netPlayerColor.Value;
+        GetComponent<MeshRenderer>().material.color = netPlayerColor.Value;
+        transform.Find("Sphere").GetComponent<MeshRenderer>().material.color = netPlayerColor.Value;
     }
 
 
@@ -33,6 +40,31 @@ public class Player : NetworkBehaviour
         ApplyPlayerColor();
     }
 
+    private Vector3 CalcMovementFromInput(float delta)
+    {
+        bool isShiftDown = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        float xMove = 0.0f;
+        float zMove = Input.GetAxis("Vertical");
+        if (isShiftDown)
+        {
+            xMove = Input.GetAxis("Horizontal");
+        }
+        Vector3 move = new Vector3(xMove, 0, zMove);
+        move *= movementSpeed * delta;
+        return move;
+    }
+    private Vector3 CalcRotationFromInput(float delta)
+    {
+        bool isShiftDown = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        float yRotate = 0.0f;
+        if (isShiftDown)
+        {
+            yRotate = Input.GetAxis("Horizontal");
+        }
+        Vector3 setVector = new Vector3(0, yRotate, 0);
+        setVector *= rotationSpeed * delta;
+        return setVector;
+    }
 
     // Update is called once per frame
     void Update()
@@ -40,6 +72,10 @@ public class Player : NetworkBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             RequestNextColorServerRpc();
+        }
+        if (Input.GetButtonDown("Fire2"))
+        {
+            RequestPositionForMovementServerRpc(movement, rotate);
         }
     }
     [ServerRpc]
