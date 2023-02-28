@@ -23,4 +23,13 @@ public class BaseBonus : NetworkBehaviour
     {
         
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log("Collided");
+        if (IsOwner)
+        {
+            Destroy(gameObject);
+        }
+    }
 }

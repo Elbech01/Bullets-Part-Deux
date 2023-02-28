@@ -110,7 +110,7 @@ GameObject:
   - component: {fileID: 5150436515172904786}
   - component: {fileID: 6414976258930893049}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Spawnpoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -260,3 +260,5 @@ MonoBehaviour:
   spawnOnLoad: 1
   refreshTime: 2
   bonusPrefab: {fileID: 8751248258666261815, guid: d6ab7a036a2d7db42b2d64b7be64fc5b, type: 3}
+  timeUntilSpawn: 0
+  currentBonus: {fileID: 0}

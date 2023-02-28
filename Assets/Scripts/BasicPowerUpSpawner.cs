@@ -6,15 +6,23 @@ using UnityEngine.UIElements;
 
 public class BasicPowerUpSpawner : NetworkBehaviour
 {
+    public Rigidbody bonusPrefab;
+    
     public bool spawnOnLoad = true;
     public float refreshTime = 2f;
-    public Rigidbody bonusPrefab = null;
-
     public float timeUntilSpawn = 0.0f;
+
     public Rigidbody currentBonus = null;
+    
+    public Transform spawnPointTransform;
+    public void Start()
+    {
+        spawnPointTransform = transform.Find("Spawnpoint");
+    }
 
     public void Update()
     {
+
         if (IsServer)
         {
             ServerUpdate();
@@ -26,6 +34,14 @@ public class BasicPowerUpSpawner : NetworkBehaviour
         base.OnNetworkSpawn();
         if (IsServer && bonusPrefab != null )
             spawnBonus();
+    }
+
+    private void HostOnNetworkSpawn()
+    {
+        if (currentBonus != null && spawnOnLoad)
+        {
+            spawnBonus();
+        }
     }
 
     private void spawnBonus()
@@ -43,7 +59,7 @@ public class BasicPowerUpSpawner : NetworkBehaviour
     {
         if (timeUntilSpawn > 0f)
         {
-            timeUntilSpawn = Time.deltaTime;
+            timeUntilSpawn -= Time.deltaTime;
             if(timeUntilSpawn <= 0)
             {
                 spawnBonus();

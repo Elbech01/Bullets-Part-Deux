@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using Unity.VisualScripting;
 
 public class Player : NetworkBehaviour
 {
@@ -11,10 +12,10 @@ public class Player : NetworkBehaviour
     private int hostColorIndex = 0;
     private Camera _camera;
     public NetworkVariable<Color> netPlayerColor = new NetworkVariable<Color>();
-    private float movementSpeed = 0.2f;
+    private float movementSpeed = 2.0f;
     private float rotationSpeed = 1.0f;
-    public Vector3 movement = new (0, 0, 0);
-    public Vector3 rotate = new (0, 0, 0);
+    private Vector3 movement = new Vector3(100f, 0f, 100f);
+    private Vector3 rotate = new Vector3(0f, 90f, 0f);
 
 
     public override void OnNetworkSpawn()
@@ -69,14 +70,19 @@ public class Player : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (IsOwner)
         {
-            RequestNextColorServerRpc();
+            if (Input.GetButtonDown("Fire1"))
+            {
+                RequestNextColorServerRpc();
+            }
+            if (Input.GetButtonDown("Fire2"))
+            {
+                RequestPositionForMovementServerRpc(movement, rotate);
+                Debug.Log("Right clicked");
+            }
         }
-        if (Input.GetButtonDown("Fire2"))
-        {
-            RequestPositionForMovementServerRpc(movement, rotate);
-        }
+        
     }
     [ServerRpc]
     void RequestNextColorServerRpc(ServerRpcParams serverRpcParams = default)
@@ -94,6 +100,7 @@ public class Player : NetworkBehaviour
     [ServerRpc]
     public void RequestPositionForMovementServerRpc(Vector3 posChange, Vector3 rotChange, ServerRpcParams serverRpcParams = default)
     {
+        Debug.Log($"{posChange} {rotChange} in movement server rpc");
         transform.Translate(posChange);
         transform.Rotate(rotChange);
     }
