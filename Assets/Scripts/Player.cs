@@ -12,10 +12,9 @@ public class Player : NetworkBehaviour
     private int hostColorIndex = 0;
     private Camera _camera;
     public NetworkVariable<Color> netPlayerColor = new NetworkVariable<Color>();
-    private float movementSpeed = 2.0f;
-    private float rotationSpeed = 1.0f;
-    private Vector3 movement = new Vector3(100f, 0f, 100f);
-    private Vector3 rotate = new Vector3(0f, 90f, 0f);
+    public NetworkVariable<int> netPlayerScore = new NetworkVariable<int>(100);
+    private float movementSpeed = 30.0f;
+    private float rotationSpeed = 30.0f;
 
 
     public override void OnNetworkSpawn()
@@ -28,6 +27,16 @@ public class Player : NetworkBehaviour
         ApplyPlayerColor();
     }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        if (IsHost)
+        {
+            if (collision.gameObject.CompareTag("Bullet"))
+            {
+                HostHandleBulletCollision(collision.gameObject);
+            }
+        }
+    }
 
     public void ApplyPlayerColor()
     {
@@ -39,6 +48,14 @@ public class Player : NetworkBehaviour
     public void OnPlayerColorChanged(Color previous, Color current)
     {
         ApplyPlayerColor();
+    }
+
+    private void UpdateScoreDiaplay()
+    {
+        if (IsOwner)
+        {
+            Debug.Log($"My score = {netPlayerScore.Value}");
+        }
     }
 
     private Vector3 CalcMovementFromInput(float delta)
@@ -72,17 +89,32 @@ public class Player : NetworkBehaviour
     {
         if (IsOwner)
         {
+            UpdateOwner();
+        }        
+    }
+
+    void UpdateOwner()
+    {
+        Vector3 moveBy = CalcMovementFromInput(Time.deltaTime);
+        Vector3 rotateBy = CalcRotationFromInput(-Time.deltaTime);
+        RequestPositionForMovementServerRpc(moveBy, rotateBy);
             if (Input.GetButtonDown("Fire1"))
             {
                 RequestNextColorServerRpc();
             }
-            if (Input.GetButtonDown("Fire2"))
-            {
-                RequestPositionForMovementServerRpc(movement, rotate);
-                Debug.Log("Right clicked");
-            }
-        }
+           
         
+    }
+    private void HostHandleBulletCollision(GameObject bullet)
+    {
+        //Bullet bulletScript = bullet.GetComponent("Bullet");
+        netPlayerScore.Value -= 1;
+        RequestNextColorServerRpc();
+
+        ulong owner = bullet.GetComponent<NetworkObject>().OwnerClientId;
+        Player otherPlayer =
+            NetworkManager.Singleton.ConnectedClients[owner].PlayerObject.GetComponent<Player>();
+        otherPlayer.netPlayerScore.Value += 1;
     }
     [ServerRpc]
     void RequestNextColorServerRpc(ServerRpcParams serverRpcParams = default)
@@ -100,7 +132,6 @@ public class Player : NetworkBehaviour
     [ServerRpc]
     public void RequestPositionForMovementServerRpc(Vector3 posChange, Vector3 rotChange, ServerRpcParams serverRpcParams = default)
     {
-        Debug.Log($"{posChange} {rotChange} in movement server rpc");
         transform.Translate(posChange);
         transform.Rotate(rotChange);
     }
