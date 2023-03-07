@@ -14,14 +14,20 @@ public class Player : NetworkBehaviour
     public NetworkVariable<Color> netPlayerColor = new NetworkVariable<Color>();
     public NetworkVariable<int> netPlayerScore = new NetworkVariable<int>(100);
     private float movementSpeed = 30.0f;
-    private float rotationSpeed = 30.0f;
-
+    private float rotationSpeed = -150.0f;
+    public BulletSpawner bulletSpawner;
 
     public override void OnNetworkSpawn()
     {
         netPlayerColor.OnValueChanged += OnPlayerColorChanged;
         _camera = transform.Find("Camera").GetComponent<Camera>();
         _camera.enabled = IsOwner;
+
+        bulletSpawner = transform.Find("Sphere (2)").transform.Find("BulletSpawner").GetComponent<BulletSpawner>();
+        if (IsHost)
+        {
+
+        }
 
         netPlayerColor.Value = availColors[hostColorIndex];
         ApplyPlayerColor();
@@ -75,7 +81,7 @@ public class Player : NetworkBehaviour
     {
         bool isShiftDown = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         float yRotate = 0.0f;
-        if (isShiftDown)
+        if (!isShiftDown)
         {
             yRotate = Input.GetAxis("Horizontal");
         }
@@ -102,12 +108,15 @@ public class Player : NetworkBehaviour
             {
                 RequestNextColorServerRpc();
             }
-           
-        
+            if (Input.GetButtonDown("Fire2"))
+            {
+                bulletSpawner.FireServerRpc(netPlayerColor.Value);
+            }
+
     }
     private void HostHandleBulletCollision(GameObject bullet)
     {
-        //Bullet bulletScript = bullet.GetComponent("Bullet");
+        Bullet bulletScript = (Bullet)bullet.GetComponent("Bullet");
         netPlayerScore.Value -= 1;
         RequestNextColorServerRpc();
 
@@ -116,7 +125,7 @@ public class Player : NetworkBehaviour
             NetworkManager.Singleton.ConnectedClients[owner].PlayerObject.GetComponent<Player>();
         otherPlayer.netPlayerScore.Value += 1;
     }
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     void RequestNextColorServerRpc(ServerRpcParams serverRpcParams = default)
     {
         hostColorIndex += 1;
