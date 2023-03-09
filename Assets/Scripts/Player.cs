@@ -20,17 +20,15 @@ public class Player : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         netPlayerColor.OnValueChanged += OnPlayerColorChanged;
+        netPlayerScore.OnValueChanged += OnPlayerScoreChanged;
         _camera = transform.Find("Camera").GetComponent<Camera>();
         _camera.enabled = IsOwner;
 
         bulletSpawner = transform.Find("Sphere (2)").transform.Find("BulletSpawner").GetComponent<BulletSpawner>();
-        if (IsHost)
-        {
-
-        }
 
         netPlayerColor.Value = availColors[hostColorIndex];
         ApplyPlayerColor();
+        UpdateScoreDiaplay();
     }
 
     void OnCollisionEnter(Collision collision)
@@ -42,6 +40,7 @@ public class Player : NetworkBehaviour
                 HostHandleBulletCollision(collision.gameObject);
             }
         }
+        
     }
 
     public void ApplyPlayerColor()
@@ -54,6 +53,10 @@ public class Player : NetworkBehaviour
     public void OnPlayerColorChanged(Color previous, Color current)
     {
         ApplyPlayerColor();
+    }
+    public void OnPlayerScoreChanged(int previous, int current)
+    {
+        UpdateScoreDiaplay();
     }
 
     private void UpdateScoreDiaplay()
@@ -119,11 +122,12 @@ public class Player : NetworkBehaviour
         Bullet bulletScript = (Bullet)bullet.GetComponent("Bullet");
         netPlayerScore.Value -= 1;
         RequestNextColorServerRpc();
-
         ulong owner = bullet.GetComponent<NetworkObject>().OwnerClientId;
         Player otherPlayer =
             NetworkManager.Singleton.ConnectedClients[owner].PlayerObject.GetComponent<Player>();
         otherPlayer.netPlayerScore.Value += 1;
+        RequesScoreUpdateServerRpc();
+        Destroy(bullet);
     }
     [ServerRpc(RequireOwnership = false)]
     void RequestNextColorServerRpc(ServerRpcParams serverRpcParams = default)
@@ -136,6 +140,12 @@ public class Player : NetworkBehaviour
 
         Debug.Log($"Host color index = {hostColorIndex} for {serverRpcParams.Receive.SenderClientId}");
         netPlayerColor.Value = availColors[hostColorIndex];
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void RequesScoreUpdateServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        UpdateScoreDiaplay();
     }
 
     [ServerRpc]
