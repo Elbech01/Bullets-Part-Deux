@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.VisualScripting;
+using TMPro;
 
 public class Player : NetworkBehaviour
 {
@@ -11,18 +12,21 @@ public class Player : NetworkBehaviour
             Color.gray, Color.green, Color.yellow };
     private int hostColorIndex = 0;
     private Camera _camera;
+    private TextMeshPro _textMeshPro;
     public NetworkVariable<Color> netPlayerColor = new NetworkVariable<Color>();
-    public NetworkVariable<int> netPlayerScore = new NetworkVariable<int>(100);
-    private float movementSpeed = 30.0f;
+    public NetworkVariable<int> netPlayerScore3 = new NetworkVariable<int>(50);
+    private float movementSpeed = 25.0f;
     private float rotationSpeed = -150.0f;
     public BulletSpawner bulletSpawner;
 
     public override void OnNetworkSpawn()
     {
         netPlayerColor.OnValueChanged += OnPlayerColorChanged;
-        netPlayerScore.OnValueChanged += OnPlayerScoreChanged;
+        netPlayerScore3.OnValueChanged += OnPlayerScoreChanged;
         _camera = transform.Find("Camera").GetComponent<Camera>();
         _camera.enabled = IsOwner;
+        _textMeshPro = transform.Find("Score").GetComponent<TextMeshPro>();
+        _textMeshPro.enabled = IsOwner;
 
         bulletSpawner = transform.Find("Sphere (2)").transform.Find("BulletSpawner").GetComponent<BulletSpawner>();
 
@@ -63,7 +67,8 @@ public class Player : NetworkBehaviour
     {
         if (IsOwner)
         {
-            Debug.Log($"My score = {netPlayerScore.Value}");
+            Debug.Log($"My score = {netPlayerScore3.Value}");
+            transform.Find("Score").GetComponent<TextMeshPro>().text = "Health: " + netPlayerScore3.Value.ToString();
         }
     }
 
@@ -107,26 +112,26 @@ public class Player : NetworkBehaviour
         Vector3 moveBy = CalcMovementFromInput(Time.deltaTime);
         Vector3 rotateBy = CalcRotationFromInput(-Time.deltaTime);
         RequestPositionForMovementServerRpc(moveBy, rotateBy);
-            if (Input.GetButtonDown("Fire1"))
+            if (Input.GetButtonDown("Fire2"))
             {
                 RequestNextColorServerRpc();
             }
-            if (Input.GetButtonDown("Fire2"))
+            if (Input.GetButtonDown("Fire1"))
             {
                 bulletSpawner.FireServerRpc(netPlayerColor.Value);
+                Debug.Log("I am owned by: " + NetworkManager.Singleton.LocalClientId);
             }
 
     }
     private void HostHandleBulletCollision(GameObject bullet)
     {
         Bullet bulletScript = (Bullet)bullet.GetComponent("Bullet");
-        netPlayerScore.Value -= 1;
+        netPlayerScore3.Value -= 1;
         RequestNextColorServerRpc();
         ulong owner = bullet.GetComponent<NetworkObject>().OwnerClientId;
         Player otherPlayer =
             NetworkManager.Singleton.ConnectedClients[owner].PlayerObject.GetComponent<Player>();
-        otherPlayer.netPlayerScore.Value += 1;
-        RequesScoreUpdateServerRpc();
+        otherPlayer.netPlayerScore3.Value += 1;
         Destroy(bullet);
     }
     [ServerRpc(RequireOwnership = false)]
@@ -140,12 +145,6 @@ public class Player : NetworkBehaviour
 
         Debug.Log($"Host color index = {hostColorIndex} for {serverRpcParams.Receive.SenderClientId}");
         netPlayerColor.Value = availColors[hostColorIndex];
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    void RequesScoreUpdateServerRpc(ServerRpcParams serverRpcParams = default)
-    {
-        UpdateScoreDiaplay();
     }
 
     [ServerRpc]

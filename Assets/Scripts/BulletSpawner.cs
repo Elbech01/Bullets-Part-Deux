@@ -12,7 +12,7 @@ public class BulletSpawner : NetworkBehaviour
     [ServerRpc]
     public void FireServerRpc(Color color, ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"I am owned by {rpcParams.Receive.SenderClientId}");
+        //Debug.Log($"I am owned by {rpcParams.Receive.SenderClientId}");
         Rigidbody newBullet = Instantiate(bullet, transform.position, transform.rotation);
         newBullet.GetComponent<NetworkObject>().SpawnWithOwnership(
             rpcParams.Receive.SenderClientId);
