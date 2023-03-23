@@ -9,7 +9,7 @@ public class BasicPowerUpSpawner : NetworkBehaviour
     public Rigidbody bonusPrefab;
     
     public bool spawnOnLoad = true;
-    public float refreshTime = 2f;
+    public float refreshTime = 10f;
     public float timeUntilSpawn = 0.0f;
 
     public Rigidbody currentBonus = null;
@@ -17,7 +17,7 @@ public class BasicPowerUpSpawner : NetworkBehaviour
     public Transform spawnPointTransform;
     public void Start()
     {
-        spawnPointTransform = transform.Find("Spawnpoint");
+        spawnPointTransform = transform.Find("Sphere");
     }
 
     public void Update()
@@ -35,7 +35,6 @@ public class BasicPowerUpSpawner : NetworkBehaviour
         if (IsServer && bonusPrefab != null )
             spawnBonus();
     }
-
     private void HostOnNetworkSpawn()
     {
         if (currentBonus != null && spawnOnLoad)
@@ -53,6 +52,7 @@ public class BasicPowerUpSpawner : NetworkBehaviour
             spawnPosition,
             Quaternion.identity);
         bonusSpawn.GetComponent<NetworkObject>().Spawn();
+        currentBonus = bonusSpawn;
     }
 
     private void ServerUpdate()
@@ -60,15 +60,17 @@ public class BasicPowerUpSpawner : NetworkBehaviour
         if (timeUntilSpawn > 0f)
         {
             timeUntilSpawn -= Time.deltaTime;
-            if(timeUntilSpawn <= 0)
+            if (timeUntilSpawn <= 0f)
             {
                 spawnBonus();
             }
-            else if (currentBonus == null)
-            {
-                timeUntilSpawn = refreshTime;
-            }
         }
+        else if (currentBonus == null)
+        {
+            timeUntilSpawn = refreshTime;
+            Debug.Log($"Time until spawn = {timeUntilSpawn}");
+        }
+        
     }
 
 }
