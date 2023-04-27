@@ -6,18 +6,16 @@ using Unity.Netcode;
 public class BulletSpawner : NetworkBehaviour
 {
     public Rigidbody bullet;
-    private float bulletSpeed = 50f;
-    private float timeToLive = 3f;
+    private float timeToLive = 1.5f;
 
     [ServerRpc]
-    public void FireServerRpc(Color color, ServerRpcParams rpcParams = default)
+    public void FireServerRpc(int speed, int scale, ServerRpcParams rpcParams = default)
     {
-        //Debug.Log($"I am owned by {rpcParams.Receive.SenderClientId}");
         Rigidbody newBullet = Instantiate(bullet, transform.position, transform.rotation);
         newBullet.GetComponent<NetworkObject>().SpawnWithOwnership(
             rpcParams.Receive.SenderClientId);
-        newBullet.velocity = transform.forward * bulletSpeed;
-        //newBullet.transform.Find("Sphere").GetComponent<MeshRenderer>().material.color = color;
+        newBullet.transform.localScale = new Vector3(scale, scale, scale);
+        newBullet.velocity = transform.forward * speed;
         Destroy(newBullet.gameObject, timeToLive);
     }
 

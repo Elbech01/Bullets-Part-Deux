@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-
-public class BaseBonus : NetworkBehaviour
+public class HealthBonus : NetworkBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -21,7 +20,7 @@ public class BaseBonus : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -29,7 +28,7 @@ public class BaseBonus : NetworkBehaviour
         ulong owner = collision.collider.GetComponent<NetworkObject>().OwnerClientId;
         Player player =
             NetworkManager.Singleton.ConnectedClients[owner].PlayerObject.GetComponent<Player>();
-        player.netPlayerDamage.Value += 5;
+        player.netPlayerScore3.Value += 10;
         Debug.Log("Collided");
         if (IsOwner)
         {
