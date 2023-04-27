@@ -131,6 +131,7 @@ public class Player : NetworkBehaviour
             {
                 NetworkManager.SceneManager.LoadScene("GameOver", UnityEngine.SceneManagement.LoadSceneMode.Single);
                 totalPlayers = -1;
+                
             }
         }
 
@@ -165,10 +166,11 @@ public class Player : NetworkBehaviour
 
         if (netPlayerScore3.Value <= 0)
         {
-            Debug.Log("DEAD DEAD DEAD DEAD DEAD DEAD DEAD DEAD DEAD DEAD DEAD");
+            Debug.Log("I got a kill");
             otherPlayer.netPlayerKills.Value++;
             otherPlayer.totalPlayers--;
-            netPlayerScore3.Value = 1;
+            Debug.Log("Players: " + totalPlayers);
+            Destroy(gameObject);
         }
     }
     [ServerRpc(RequireOwnership = false)]
